@@ -1,6 +1,4 @@
 import wx
-import pickle
-import os
 
 class Login(wx.Frame):
     def __init__(self):
@@ -21,7 +19,7 @@ class Login(wx.Frame):
     def quitar_mesa(self, event):
 
             
-            wx.MessageBox(f"Se ha quitado la mesa: {mesa_eliminada}", "Mesa Eliminada", wx.OK | wx.ICON_INFORMATION)
+            wx.MessageBox(f"Se ha quitado la mesa: ", "Mesa Eliminada", wx.OK | wx.ICON_INFORMATION)
             wx.MessageBox("No hay mesas para quitar.", "Advertencia", wx.OK | wx.ICON_WARNING)
 
 app = wx.App(False)

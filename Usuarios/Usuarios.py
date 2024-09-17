@@ -1,9 +1,5 @@
 import wx
-import pickle
-import sys
-import os
-sys.path.append("./MesasBD")
-from MesaBD import Mesa
+import mysql.connector
 
 class Mesa_libre(wx.Frame):
     def __init__(self, *args, **kw):
@@ -39,7 +35,6 @@ class Mesa_libre(wx.Frame):
         pantalla_mesa.SetSizer(visor)
 
     def reserva_mesa(self,event):
-        base_datos = Mesa()
 
         if not nombre or not cantidad_personas or not fecha:
             wx.MessageBox("Por favor, complete todos los campos", "Error", wx.OK | wx.ICON_ERROR)
@@ -48,7 +43,6 @@ class Mesa_libre(wx.Frame):
         nombre = self.nombre.GetValue()
         cantidad_personas = self.cantidad_personas.GetValue()
         fecha = self.fecha.GetValue()
-        base_datos.agregar_mesa(nombre,cantidad_personas,fecha)
 
 
 class Usuario(wx.Frame):
@@ -62,33 +56,48 @@ class Usuario(wx.Frame):
         self.pantalla_principal = wx.Panel(self)
         self.SetIcon(self.icono)
         self.visor = wx.BoxSizer(wx.VERTICAL)
-        self.mostrar_mesas_ocupadas()
+
+        conexion = mysql.connector.connect(
+            host="127.0.0.1",
+            user="root",
+            password="gustavo",
+            database="restaurante_reserva"
+        )
+        cursor = conexion.cursor()
+        cursor.execute("SELECT id, estado FROM mesas")
+        mesas = cursor.fetchall()
+
+        # Crear botones dinámicos para cada mesa
+        for mesa in mesas:
+            id_mesa, estado = mesa
+
+            # Determinar imagen según estado
+            if estado == 'libre':
+                imagen_mesa = self.imagen_mesa_libre
+            else:
+                imagen_mesa = self.imagen_mesa_ocupada
+
+            # Crear botón para la mesa
+            boton_mesa = wx.Button(self.pantalla_principal, label=f"Mesa {id_mesa}", size=imagen_mesa.GetSize(), style=wx.BORDER_NONE)
+            boton_mesa.SetBitmap(imagen_mesa)
+            boton_mesa.Bind(wx.EVT_BUTTON, lambda event, id=id_mesa: self.mostrar_info_mesa(id))
+            self.visor.Add(boton_mesa, 0, wx.ALL | wx.CENTER, 5)
 
         self.pantalla_principal.SetSizer(self.visor)
+        self.Layout()
+
+        self.pantalla_principal.SetSizer(self.visor)
+
+    def mostrar_info_mesa(self, id_mesa):
+        wx.MessageBox(f"Mostrando información de la mesa {id_mesa}", "Información de la Mesa", wx.OK | wx.ICON_INFORMATION)
 
     def pantalla_mesa_libre(self,event):
         mesa_libre = Mesa_libre(None)
         mesa_libre.Show()
-
-#f"ID Mesa: {mesa['ID de la mesa']}, Reservador: {mesa['Reservador']}, Personas: {mesa['Cantidad de Personas']}, Fecha: {mesa['Fecha de la reserva']}"
-
-    def mostrar_mesas_ocupadas(self):
-        with open("../Reserva_Restaruante/MesasBD/Mesas.pkl", "rb") as archivo:
-                base_datos = pickle.load(archivo)
-                for mesa in base_datos:
-                            
-                            self.mesa_informacion = "a"
-                            self.mesa_ocupada = wx.Button(self.pantalla_principal, id=wx.ID_ANY, size=self.imagen_mesa_ocupada.GetSize(), style=wx.BORDER_NONE)
-                            self.mesa_ocupada.SetBitmap(self.imagen_mesa_ocupada)
-                            self.mesa_ocupada.Bind(wx.EVT_BUTTON,mostrar_mensaje)
-                            self.visor.Add(self.mesa_ocupada, 0, wx.ALL | wx.CENTER, 5)
-
-                            def mostrar_mensaje(self,event):
-                                 return wx.MessageBox(self.mesa_informacion,"Reserva", wx.OK | wx.ICON_INFORMATION)
-
 
 
 app = wx.App(False)
 frame = Usuario()
 frame.Show()
 app.MainLoop()
+

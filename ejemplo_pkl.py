@@ -30,3 +30,4 @@ def agregar_mesa(id_mesa, reservador, cantidad_personas, fecha_reserva):
         print(f"Mesa {id_mesa} ocupada por {reservador}.")
     else:
         print(f"La mesa {id_mesa} ya está ocupada o no existe.")
+
