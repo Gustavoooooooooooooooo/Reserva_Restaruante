@@ -1,6 +1,6 @@
 import wx
 import pickle
-import sys
+import subprocess
 
 # Administrador Usuario:administrador123, Contraseña:administrador123
 # Cliente Usuario:cliente123, Contraseña:cliente123
@@ -122,11 +122,11 @@ class Login(wx.Frame):
                     verificacion_administrador = True
 
         if verificacion_administrador == True:
-            with open("../Reserva_Restaruante/Administradores/Administradores.py") as administradores:
-                exec(administradores.read())
+            subprocess.run(["python","../Reserva_Restaruante/Administradores/Administradores.py"])
         elif verificacion_administrador == False:
-            with open("../Reserva_Restaruante/Usuarios/Usuarios.py") as usuario:
-                exec(usuario.read())
+            subprocess.run(["python","../Reserva_Restaruante/Usuarios/Usuarios.py"])
+        self.Close()
+
 
     def registro_cuenta(self, event):
         pantalla_registro = Registro(None)
