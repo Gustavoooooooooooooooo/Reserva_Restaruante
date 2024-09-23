@@ -2,9 +2,6 @@ import wx
 import pickle
 import subprocess
 
-# Administrador Usuario:administrador123, Contraseña:administrador123
-# Cliente Usuario:cliente123, Contraseña:cliente123
-
 class Registro(wx.Frame):
     def __init__(self, *args, **kw):
 
@@ -14,7 +11,7 @@ class Registro(wx.Frame):
         self.SetIcon(icono)
         pantalla_registro = wx.Panel(self)
         self.SetTitle("Registro")
-        self.SetSize((300, 500))
+        self.SetSize((300, 350))
         visor_centralizador = wx.BoxSizer(wx.VERTICAL)
 
         self.etiqueta_usuario = wx.StaticText(pantalla_registro, label="Ingrese el nombre de Usuario que va a utilizar")
@@ -33,7 +30,6 @@ class Registro(wx.Frame):
         visor_centralizador.Add(self.etiqueta_rol, 0, wx.ALL | wx.CENTER, 5)
 
         opciones = ["Usuario","Administrador"]
-
         self.rol = wx.ListBox(pantalla_registro, choices = opciones, style = wx.LB_SINGLE)
         visor_centralizador.Add(self.rol, 0, wx.ALL | wx.CENTER, 5)
 
@@ -44,7 +40,6 @@ class Registro(wx.Frame):
 
         visor_centralizador.Fit(pantalla_registro)
         pantalla_registro.SetSizer(visor_centralizador)
-
 
     def registro_cuenta(self,event):
         usuario_registro = self.usuario.GetValue()
@@ -65,7 +60,6 @@ class Registro(wx.Frame):
             pickle.dump(registracion,datos)
             wx.MessageBox("Se ha registrado correctamente","Registro", wx.OK | wx.ICON_INFORMATION)
             self.Close()
-
 
 
 class Login(wx.Frame):
@@ -101,7 +95,7 @@ class Login(wx.Frame):
         pantalla_principal.SetSizer(visor_centralizador)
 
     def validacion_cuenta(self, event):
-
+        self.Close()
         usuario_validacion = self.usuario.GetValue()
         contraseña_validacion = self.contraseña.GetValue()
         datos_cuenta = {}
@@ -109,8 +103,6 @@ class Login(wx.Frame):
 
         with open("Base de datos.pkl","rb") as datos:
             archivo_base_datos = pickle.load(datos)
-            print(archivo_base_datos)
-
             verificacion_administrador = None
 
             for diccionario in archivo_base_datos["Usuario"]:
@@ -125,7 +117,6 @@ class Login(wx.Frame):
             subprocess.run(["python","../Reserva_Restaruante/Administradores/Administradores.py"])
         elif verificacion_administrador == False:
             subprocess.run(["python","../Reserva_Restaruante/Usuarios/Usuarios.py"])
-        self.Close()
 
 
     def registro_cuenta(self, event):
