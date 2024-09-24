@@ -121,10 +121,10 @@ class Mesa_libre(wx.Frame):
             wx.MessageBox("Por favor, complete todos los campos", "Error", wx.OK | wx.ICON_ERROR)
         else:
             reservar_mesa(self.id_mesa, nombre, cantidad_personas, fecha, planta)
-            wx.MessageBox("Mesa reservada exitosamente", "Reserva", wx.OK | wx.ICON_EXCLAMATION)
+            wx.MessageBox("Mesa reservada exitosamente", "Reserva", wx.OK | wx.ICON_INFORMATION)
             
             self.Close()
-            self.parent.reservar_mesa()
+            self.parent.actualizar_mesas()
 
 
 app = wx.App(False)
