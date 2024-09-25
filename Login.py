@@ -1,13 +1,11 @@
-import wx
-import pickle
-import subprocess
+import wx, pickle, subprocess
 
 class Registro(wx.Frame):
     def __init__(self, *args, **kw):
 
         super(Registro, self).__init__(*args, **kw)
 
-        icono = wx.Icon("../Reserva_Restaruante/imagenes de mesas/icono.png", wx.BITMAP_TYPE_PNG)
+        icono = wx.Icon("../Reserva_Restaruante/imagenes/icono.png", wx.BITMAP_TYPE_PNG)
         self.SetIcon(icono)
         pantalla_registro = wx.Panel(self)
         self.SetTitle("Registro")
@@ -45,21 +43,32 @@ class Registro(wx.Frame):
         usuario_registro = self.usuario.GetValue()
         contraseña_registro = self.contraseña.GetValue()
         rol_registro = self.rol.GetStringSelection()
-        print(rol_registro)
 
-        with open("Base de datos.pkl","rb+") as datos:
-            registracion = pickle.load(datos)
-            if rol_registro == "Usuario":
-                registracion["Usuario"].append({usuario_registro:contraseña_registro})
-                print("pase por usuario")
-            elif rol_registro == "Administrador":
-                registracion["Administrador"].append({usuario_registro:contraseña_registro})
-                print("pase por administrador")
+        if not usuario_registro or not contraseña_registro or not rol_registro:
+            wx.MessageBox("Por favor, complete todos los campos", "Error", wx.OK | wx.ICON_ERROR)
+        else:
+            with open("Base de datos.pkl","rb+") as datos:
+                registracion = pickle.load(datos)
+                usuario_existente = False
+                for usuario in registracion[rol_registro]:
+                    if usuario_registro in usuario:
+                        usuario_existente = True
+                        break
 
-            datos.seek(0)
-            pickle.dump(registracion,datos)
-            wx.MessageBox("Se ha registrado correctamente","Registro", wx.OK | wx.ICON_INFORMATION)
-            self.Close()
+                if usuario_existente:
+                    wx.MessageBox("El nombre de usuario ya existe. Por favor, elija otro.", "Error", wx.OK | wx.ICON_ERROR)
+                else:
+                    if rol_registro == "Usuario":
+                        registracion["Usuario"].append({usuario_registro:contraseña_registro})
+                        print("pase por usuario")
+                    elif rol_registro == "Administrador":
+                        registracion["Administrador"].append({usuario_registro:contraseña_registro})
+                        print("pase por administrador")
+
+                    datos.seek(0)
+                    pickle.dump(registracion,datos)
+                    wx.MessageBox("Se ha registrado correctamente","Registro", wx.OK | wx.ICON_INFORMATION)
+                    self.Close()
 
 
 class Login(wx.Frame):
@@ -68,7 +77,7 @@ class Login(wx.Frame):
         super().__init__(parent=None, title="Login")
 
         pantalla_principal = wx.Panel(self)
-        icono = wx.Icon("../Reserva_Restaruante/imagenes de mesas/icono.png", wx.BITMAP_TYPE_PNG)
+        icono = wx.Icon("../Reserva_Restaruante/imagenes/icono.png", wx.BITMAP_TYPE_PNG)
         self.SetIcon(icono)
         visor_centralizador = wx.BoxSizer(wx.VERTICAL)
 
@@ -95,28 +104,36 @@ class Login(wx.Frame):
         pantalla_principal.SetSizer(visor_centralizador)
 
     def validacion_cuenta(self, event):
-        self.Close()
         usuario_validacion = self.usuario.GetValue()
         contraseña_validacion = self.contraseña.GetValue()
-        datos_cuenta = {}
-        datos_cuenta[usuario_validacion] = contraseña_validacion
 
-        with open("Base de datos.pkl","rb") as datos:
-            archivo_base_datos = pickle.load(datos)
-            verificacion_administrador = None
+        if not usuario_validacion or not contraseña_validacion:
+            wx.MessageBox("Por favor, complete todos los campos", "Error", wx.OK | wx.ICON_ERROR)
+        else:
+            datos_cuenta = {}
+            datos_cuenta[usuario_validacion] = contraseña_validacion
 
-            for diccionario in archivo_base_datos["Usuario"]:
-                if usuario_validacion in diccionario and diccionario[usuario_validacion] == contraseña_validacion:
-                    verificacion_administrador = False
+            with open("Base de datos.pkl","rb") as datos:
+                archivo_base_datos = pickle.load(datos)
+                verificacion_administrador = None
 
-            for diccionario in archivo_base_datos["Administrador"]:
-                if usuario_validacion in diccionario and diccionario[usuario_validacion] == contraseña_validacion:
-                    verificacion_administrador = True
+                for diccionario in archivo_base_datos["Usuario"]:
+                    if usuario_validacion in diccionario and diccionario[usuario_validacion] == contraseña_validacion:
+                        verificacion_administrador = False
 
-        if verificacion_administrador == True:
-            subprocess.run(["python","../Reserva_Restaruante/Administradores/Administradores.py"])
-        elif verificacion_administrador == False:
-            subprocess.run(["python","../Reserva_Restaruante/Usuarios/Usuarios.py"])
+                for diccionario in archivo_base_datos["Administrador"]:
+                    if usuario_validacion in diccionario and diccionario[usuario_validacion] == contraseña_validacion:
+                        verificacion_administrador = True
+
+                if verificacion_administrador == None:
+                    wx.MessageBox("No existe el usuario/administrador ingresado. Ingrese de nuevo.", "Error", wx.OK | wx.ICON_ERROR)
+
+            if verificacion_administrador == True:
+                self.Close()
+                subprocess.Popen(["python","../Reserva_Restaruante/Administradores/Administradores.py"])
+            elif verificacion_administrador == False:
+                subprocess.Popen(["python","../Reserva_Restaruante/Usuarios/Usuarios.py"])
+                self.Close()
 
 
     def registro_cuenta(self, event):
