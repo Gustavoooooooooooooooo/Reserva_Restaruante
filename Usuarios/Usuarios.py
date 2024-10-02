@@ -1,15 +1,14 @@
-import wx
-import mysql.connector
-import sys
-import os
+import wx, subprocess, sys, os, mysql.connector
+
 sys.path.append(os.path.abspath('../Reserva_Restaruante/MesasBD'))
 from MesaBD import reservar_mesa
 
 class Usuario(wx.Frame):
     def __init__(self):
-        self.imagen_mesa_ocupada = wx.Image("../Reserva_Restaruante/imagenes de mesas/mesa ocupada.png", wx.BITMAP_TYPE_PNG)
-        self.imagen_mesa_libre = wx.Image("../Reserva_Restaruante/imagenes de mesas/mesa libre.png", wx.BITMAP_TYPE_PNG)
-        self.icono = wx.Icon("../Reserva_Restaruante/imagenes de mesas/icono.png", wx.BITMAP_TYPE_PNG)
+        self.imagen_mesa_ocupada = wx.Image("../Reserva_Restaruante/imagenes/mesa ocupada.png", wx.BITMAP_TYPE_PNG)
+        self.imagen_mesa_libre = wx.Image("../Reserva_Restaruante/imagenes/mesa libre.png", wx.BITMAP_TYPE_PNG)
+        self.imagen_informacion = wx.Image("../Reserva_Restaruante/imagenes/informacion.png", wx.BITMAP_TYPE_PNG)
+        self.icono = wx.Icon("../Reserva_Restaruante/imagenes/icono.png", wx.BITMAP_TYPE_PNG)
         super().__init__(parent=None, title="Usuario")
 
         self.pantalla_principal = wx.Panel(self)
@@ -23,40 +22,61 @@ class Usuario(wx.Frame):
 
         self.visor = wx.GridSizer(0, 4, 10, 10)
 
-        conexion = mysql.connector.connect(
+        self.conexion = mysql.connector.connect(
             host="127.0.0.1",
             user="root",
             password="gustavo",
             database="restaurante_reserva"
         )
-        cursor = conexion.cursor()
-        cursor.execute("SELECT * FROM mesa")
-        mesas = cursor.fetchall()
+        self.cursor = self.conexion.cursor()
+        self.cursor.execute("SELECT * FROM mesa")
+        self.mesas = self.cursor.fetchall()
 
-        new_width, new_height = 70, 70
-        imagen_mesa_libre_escalada = self.imagen_mesa_libre.Scale(new_width, new_height).ConvertToBitmap()
-        imagen_mesa_ocupada_escalada = self.imagen_mesa_ocupada.Scale(new_width, new_height).ConvertToBitmap()
+        self.ancho, self.alto = 70, 70
+        self.imagen_informacion_escalada = self.imagen_informacion.Scale(self.ancho-40, self.alto-40).ConvertToBitmap()
+        self.imagen_mesa_libre_escalada = self.imagen_mesa_libre.Scale(self.ancho, self.alto).ConvertToBitmap()
+        self.imagen_mesa_ocupada_escalada = self.imagen_mesa_ocupada.Scale(self.ancho, self.alto).ConvertToBitmap()
 
-        for mesa in mesas:
+        for mesa in self.mesas:
             self.id_mesa, self.estado, self.reservador, self.cantidad_personas, self.fecha_reserva, self.ubicacion_mesa = mesa
 
             if self.estado == 'libre':
-                boton_mesa = wx.Button(self.pantalla_principal, size=(new_width, new_height), style=wx.BORDER_NONE)
-                boton_mesa.SetBitmap(imagen_mesa_libre_escalada)
-                boton_mesa.Bind(wx.EVT_BUTTON, lambda event, id=self.id_mesa: self.pantalla_mesa_libre(id))
+                self.boton_mesa = wx.Button(self.pantalla_principal, size=(self.ancho, self.alto), style=wx.BORDER_NONE)
+                self.boton_mesa.SetBitmap(self.imagen_mesa_libre_escalada)
+                self.boton_mesa.Bind(wx.EVT_BUTTON, lambda event, id=self.id_mesa: self.pantalla_mesa_libre(id))
             else:
-                boton_mesa = wx.Button(self.pantalla_principal, size=(new_width, new_height), style=wx.BORDER_NONE)
-                boton_mesa.SetBitmap(imagen_mesa_ocupada_escalada)
-                boton_mesa.Bind(wx.EVT_BUTTON, lambda event, nombre=self.reservador: self.mostrar_info_mesa(nombre))
+                self.boton_mesa = wx.Button(self.pantalla_principal, size=(self.ancho, self.alto), style=wx.BORDER_NONE)
+                self.boton_mesa.SetBitmap(self.imagen_mesa_ocupada_escalada)
+                self.boton_mesa.Bind(wx.EVT_BUTTON, lambda event, nombre=self.reservador: self.mostrar_info_mesa(nombre))
 
-            self.visor.Add(boton_mesa, 0, wx.EXPAND)
+            self.visor.Add(self.boton_mesa, 0, wx.EXPAND)
+
+        self.retroceder = wx.Button(self.pantalla_principal,label = "Volver")
+        self.retroceder.Bind(wx.EVT_BUTTON, self.volver_login)
+        if self.retroceder.GetContainingSizer():
+            self.retroceder.GetContainingSizer().Remove(self.retroceder)
+        self.visor.Add(self.retroceder, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 5)
+
+        self.instrucciones = wx.Button(self.pantalla_principal, size =(self.ancho-40,self.alto-40), style=wx.BORDER_NONE)
+        self.instrucciones.SetBitmap(self.imagen_informacion_escalada)
+        self.instrucciones.Bind(wx.EVT_BUTTON,self.mostrar_instrucciones)
+        if self.instrucciones.GetContainingSizer():
+            self.instrucciones.GetContainingSizer().Remove(self.instrucciones)
+        self.visor.Add(self.instrucciones, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 5)
 
         self.visor.Fit(self.pantalla_principal)
         self.pantalla_principal.SetSizer(self.visor)
         self.Layout()
 
+    def volver_login(self,event):
+        self.Close()
+        subprocess.Popen(["python","../Reserva_Restaruante/Login.py"])
+
     def mostrar_info_mesa(self, nombre):
         wx.MessageBox(f"Mesa ocupada por {nombre}", "Información de la Mesa", wx.OK | wx.ICON_INFORMATION)
+
+    def mostrar_instrucciones(self,event):
+        print("a")
 
     def pantalla_mesa_libre(self, id):
         parent = self
@@ -74,7 +94,7 @@ class Mesa_libre(wx.Frame):
         self.parent = parent
 
         pantalla_mesa = wx.Panel(self)
-        icono = wx.Icon("../Reserva_Restaruante/imagenes de mesas/icono.png", wx.BITMAP_TYPE_PNG)
+        icono = wx.Icon("../Reserva_Restaruante/imagenes/icono.png", wx.BITMAP_TYPE_PNG)
         self.SetIcon(icono)
         visor = wx.BoxSizer(wx.VERTICAL)
         self.SetSize(350,400)

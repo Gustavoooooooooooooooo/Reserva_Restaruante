@@ -18,7 +18,9 @@ def crear_mesa():
     conexion.commit()
 
 def eliminar_mesa(id_mesa):
-    return "a"
+    eliminacion_mesa = "DELETE FROM mesa WHERE id_mesa = %s;"
+    cursor.execute(eliminacion_mesa,(id_mesa,))
+    conexion.commit()
 
 def vaciar_mesa(id_mesa):
     # Verificar si la mesa está libre
@@ -26,7 +28,7 @@ def vaciar_mesa(id_mesa):
     cursor.execute(consulta_verificacion, (id_mesa,))
     resultado = cursor.fetchone()
     
-    if resultado and resultado[0] == 'libre':
+    if resultado and resultado[0] != 'libre':
         # Cambiar el estado de la mesa a ocupado y actualizar los datos del reservador
         consulta_actualizar = """
         UPDATE mesa
@@ -63,8 +65,5 @@ def reservar_mesa(id_mesa, reservador, cantidad_personas, fecha_reserva, ubicaci
     else:
         print(f"La mesa {id_mesa} ya está ocupada o no existe.")
 
-#for i in range(4):
-    #crear_mesa()
-#reservar_mesa("gustavo",3,"2023-03-14","Planta Alta")
 
 
