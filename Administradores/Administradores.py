@@ -23,12 +23,16 @@ class Administrador(wx.Frame):
         self.cargar_mesas()
 
     def cargar_mesas(self):
-        """Método que carga y actualiza las mesas desde la base de datos."""
-        if hasattr(self, 'visor'):
-            self.visor.Clear(True)  # Limpia el visor si ya existe
+
+        #Método que carga y actualiza las mesas desde la base de datos.
+        if hasattr(self, 'visor_principal'):
+            self.visor_principal.Clear(True)  # Limpia el visor si ya existe
 
         # wx.GridSizer organiza las mesas en un grid con 4 columnas
-        self.visor = wx.GridSizer(0, 4, 10, 10)
+        self.visor_mesa = wx.GridSizer(0, 4, 10, 10)
+        self.visor_principal = wx.BoxSizer(wx.VERTICAL)
+        self.visor_botones = wx.BoxSizer(wx.HORIZONTAL)
+
 
         # Conexión a la base de datos MySQL
         self.conexion = mysql.connector.connect(
@@ -62,44 +66,53 @@ class Administrador(wx.Frame):
                 boton_mesa.SetBitmap(self.imagen_mesa_ocupada_escalada)
                 boton_mesa.Bind(wx.EVT_BUTTON, lambda event,reservador=self.reservador,cantidad_personas=self.cantidad_personas,fecha_reserva=self.fecha_reserva,ubicacion_mesa=self.ubicacion_mesa, id=self.id_mesa: self.pantalla_mesa_ocupada(id,reservador,cantidad_personas,fecha_reserva,ubicacion_mesa))
 
-            self.visor.Add(boton_mesa, 0, wx.EXPAND)  # Añade el botón al visor de la interfaz
+            self.visor_mesa.Add(boton_mesa, 0, wx.EXPAND)  # Añade el botón al visor de la interfaz
 
         # Botón para mostrar instrucciones
         self.instrucciones = wx.Button(self.pantalla_principal, size =(self.ancho-40,self.alto-40), style=wx.BORDER_NONE)
         self.instrucciones.SetBitmap(self.imagen_informacion_escalada)
         self.instrucciones.Bind(wx.EVT_BUTTON, self.mostrar_instrucciones)
-        self.visor.Add(self.instrucciones, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 5)
+        self.visor_botones.Add(self.instrucciones, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 10)
 
         # Botón para retroceder al login
         self.retroceder = wx.Button(self.pantalla_principal,label = "Volver")
         self.retroceder.Bind(wx.EVT_BUTTON, self.volver_login)
-        self.visor.Add(self.retroceder, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 5)
+        self.visor_botones.Add(self.retroceder, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 10)
 
         # Botón para crear una nueva mesa
         self.mesa_creador = wx.Button(self.pantalla_principal, label = "Crear Mesa")
         self.mesa_creador.Bind(wx.EVT_BUTTON, self.Creacion_mesa)
-        self.visor.Add(self.mesa_creador, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 5)
+        self.visor_botones.Add(self.mesa_creador, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 10)
 
-        self.visor.Fit(self.pantalla_principal)
-        self.pantalla_principal.SetSizer(self.visor)  # Establece el layout en el panel
+
+        #self.sizer_principal.Add(self.visor_mesa, 1, wx.EXPAND | wx.ALL, 10)  # Sizer de mesas ocupa la mayor parte del espacio
+        
+        self.visor_principal.Add(self.visor_mesa, 1, wx.EXPAND | wx.ALL, 10)  # Sizer de mesas ocupa la mayor parte del espacio
+        self.visor_principal.Add(self.visor_botones, 0, wx.ALIGN_RIGHT | wx.ALL, 10)
+
+        self.visor_principal.Fit(self.pantalla_principal)
+        self.pantalla_principal.SetSizer(self.visor_principal)  # Establece el layout en el panel
         self.Layout()
 
     def mostrar_instrucciones(self, event):
-        """Método que muestra instrucciones cuando se presiona el botón de información."""
-        print("Instrucciones sobre la gestión de mesas.")
+    # Muestra las instrucciones para el uso de la interfaz con imágenes de mesas libres y ocupadas.
+        mensaje = "Las mesas azules son las mesas libres y las mesas naranjas son las mesas ocupadas."
+        dialogo = wx.MessageDialog(self, mensaje, "Información sobre Mesas", wx.OK | wx.ICON_INFORMATION)
+        dialogo.ShowModal()
+        dialogo.Destroy()
 
     def volver_login(self, event):
-        """Cierra la ventana actual y regresa a la pantalla de login."""
+        "Cierra la ventana actual y regresa a la pantalla de login."
         self.Close()
         subprocess.Popen(["python", "../Reserva_Restaruante/Login.py"])
 
     def Creacion_mesa(self, event):
-        """Llama a la función externa para crear una nueva mesa y actualiza la lista."""
+        "Llama a la función externa para crear una nueva mesa y actualiza la lista."
         crear_mesa()  # Llama a la función para crear una nueva mesa
         self.actualizar_mesas()  # Refresca la lista de mesas
 
     def operaciones_mesa_libre(self, id):
-        """Realiza operaciones sobre una mesa libre, como eliminarla."""
+        "Realiza operaciones sobre una mesa libre, como eliminarla."
         operacion = wx.MessageDialog(None, "¿Desea eliminar la mesa?", "Mesa Libre", wx.YES_NO | wx.ICON_QUESTION)
         respuesta = operacion.ShowModal()
 
@@ -108,20 +121,20 @@ class Administrador(wx.Frame):
         self.actualizar_mesas()  # Actualiza la lista de mesas
 
     def pantalla_mesa_ocupada(self, id, reservador, cantidad_personas, fecha_reserva, ubicacion_mesa):
-        """Abre una nueva ventana con información sobre la mesa ocupada."""
+        #Abre una nueva ventana con información sobre la mesa ocupada.
         parent = self
         mesa_libre = Mesa_Ocupada(id, parent, reservador, cantidad_personas, fecha_reserva, ubicacion_mesa, None)
         mesa_libre.Show()
 
     def actualizar_mesas(self):
-        """Método para recargar y actualizar las mesas en la interfaz."""
+        #Método para recargar y actualizar las mesas en la interfaz.
         self.cargar_mesas()  # Recarga las mesas desde la base de datos
 
 
 # Clase para manejar las mesas ocupadas
 class Mesa_Ocupada(wx.Frame):
     def __init__(self, id, parent, reservador, cantidad_personas, fecha_reserva, ubicacion_mesa, *args, **kw):
-        """Inicializa la ventana con la información de la mesa ocupada."""
+        #Inicializa la ventana con la información de la mesa ocupada.
         super(Mesa_Ocupada, self).__init__(*args, **kw)
         self.id_mesa = id
         self.parent = parent
@@ -160,21 +173,21 @@ class Mesa_Ocupada(wx.Frame):
         pantalla_mesa.SetSizer(visor)
 
     def eliminacion_de_mesa(self, event):
-        """Elimina la mesa ocupada y actualiza la lista en la pantalla principal."""
+        #Elimina la mesa ocupada y actualiza la lista en la pantalla principal.
         eliminar_mesa(self.id_mesa)
         self.parent.actualizar_mesas()
         wx.MessageBox("Mesa eliminada exitosamente", "Eliminación", wx.OK | wx.ICON_INFORMATION)
         self.Close()
 
     def desocupacion(self, event):
-        """Vacía la mesa ocupada y actualiza la lista en la pantalla principal."""
+        #Vacía la mesa ocupada y actualiza la lista en la pantalla principal.
         vaciar_mesa(self.id_mesa)
         self.parent.actualizar_mesas()
         wx.MessageBox("Mesa vaciada exitosamente", "Desocupación", wx.OK | wx.ICON_INFORMATION)
         self.Close()
 
     def retroceder(self, event):
-        """Cierra la ventana de mesa ocupada y regresa a la pantalla anterior."""
+        #Cierra la ventana de mesa ocupada y regresa a la pantalla anterior.
         self.Close()
 
 

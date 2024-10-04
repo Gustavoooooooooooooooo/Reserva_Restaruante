@@ -1,4 +1,5 @@
 import wx, subprocess, sys, os, mysql.connector
+import datetime as dt
 
 # Añade la ruta del módulo MesaBD para importar funciones relacionadas con la reserva de mesas
 sys.path.append(os.path.abspath('../Reserva_Restaruante/MesasBD'))
@@ -22,11 +23,13 @@ class Usuario(wx.Frame):
 
     def cargar_mesas(self):
         """Carga y actualiza las mesas desde la base de datos, mostrando su estado (libre u ocupada)."""
-        if hasattr(self, 'visor'):
-            self.visor.Clear(True)
+        if hasattr(self, 'visor_principal'):
+            self.visor_principal.Clear(True)
 
         # Organiza los botones de las mesas en un grid de 4 columnas
-        self.visor = wx.GridSizer(0, 4, 10, 10)
+        self.visor_mesa = wx.GridSizer(0, 4, 10, 10)
+        self.visor_principal = wx.BoxSizer(wx.VERTICAL)
+        self.visor_botones = wx.BoxSizer(wx.HORIZONTAL)
 
         # Conexión a la base de datos para obtener el estado de las mesas
         self.conexion = mysql.connector.connect(
@@ -61,22 +64,25 @@ class Usuario(wx.Frame):
                 self.boton_mesa.Bind(wx.EVT_BUTTON, lambda event, nombre=self.reservador: self.mostrar_info_mesa(nombre))
 
             # Añade el botón al visor de la interfaz
-            self.visor.Add(self.boton_mesa, 0, wx.EXPAND)
+            self.visor_mesa.Add(self.boton_mesa, 0, wx.EXPAND)
 
         # Botón para regresar al login
         self.retroceder = wx.Button(self.pantalla_principal, label="Volver")
         self.retroceder.Bind(wx.EVT_BUTTON, self.volver_login)
-        self.visor.Add(self.retroceder, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 5)
+        self.visor_botones.Add(self.retroceder, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 5)
 
         # Botón para mostrar instrucciones
         self.instrucciones = wx.Button(self.pantalla_principal, size=(self.ancho-40, self.alto-40), style=wx.BORDER_NONE)
         self.instrucciones.SetBitmap(self.imagen_informacion_escalada)
         self.instrucciones.Bind(wx.EVT_BUTTON, self.mostrar_instrucciones)
-        self.visor.Add(self.instrucciones, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 5)
+        self.visor_botones.Add(self.instrucciones, 0, wx.ALIGN_BOTTOM | wx.ALIGN_LEFT, 5)
+
+        self.visor_principal.Add(self.visor_mesa, 1, wx.EXPAND | wx.ALL, 10)  # Sizer de mesas ocupa la mayor parte del espacio
+        self.visor_principal.Add(self.visor_botones, 0, wx.ALIGN_RIGHT | wx.ALL, 10)
 
         # Establece el layout en el panel
-        self.visor.Fit(self.pantalla_principal)
-        self.pantalla_principal.SetSizer(self.visor)
+        self.visor_principal.Fit(self.pantalla_principal)
+        self.pantalla_principal.SetSizer(self.visor_principal)
         self.Layout()
 
     def volver_login(self, event):
@@ -89,8 +95,11 @@ class Usuario(wx.Frame):
         wx.MessageBox(f"Mesa ocupada por {nombre}", "Información de la Mesa", wx.OK | wx.ICON_INFORMATION)
 
     def mostrar_instrucciones(self, event):
-        """Muestra las instrucciones para el uso de la interfaz (placeholder)."""
-        print("Instrucciones para reservar una mesa.")
+    # Muestra las instrucciones para el uso de la interfaz con imágenes de mesas libres y ocupadas.
+        mensaje = "Las mesas azules son las mesas libres y las mesas naranjas son las mesas ocupadas."
+        dialogo = wx.MessageDialog(self, mensaje, "Información sobre Mesas", wx.OK | wx.ICON_INFORMATION)
+        dialogo.ShowModal()
+        dialogo.Destroy()
 
     def pantalla_mesa_libre(self, id):
         """Abre la ventana para reservar una mesa libre."""
@@ -101,6 +110,7 @@ class Usuario(wx.Frame):
         """Recarga las mesas desde la base de datos y actualiza la interfaz."""
         self.cargar_mesas()
 
+
 class Mesa_libre(wx.Frame):
     def __init__(self, id, parent, *args, **kw):
         """Inicializa la interfaz para reservar una mesa libre."""
@@ -109,68 +119,117 @@ class Mesa_libre(wx.Frame):
         self.parent = parent
 
         # Crea el panel de la ventana para la reserva
-        pantalla_mesa = wx.Panel(self)
+        self.pantalla_mesa = wx.Panel(self)
         icono = wx.Icon("../Reserva_Restaruante/imagenes/icono.png", wx.BITMAP_TYPE_PNG)
         self.SetIcon(icono)
-        visor = wx.BoxSizer(wx.VERTICAL)
+        self.visor = wx.BoxSizer(wx.VERTICAL)
         self.SetSize(350, 400)
 
         # Etiquetas y campos para la información de la reserva
-        self.nombre_etiqueta = wx.StaticText(pantalla_mesa, label="Coloque el nombre de la persona que reserva la mesa")
-        visor.Add(self.nombre_etiqueta, 0, wx.ALL | wx.CENTER, 5)
+        self.nombre_etiqueta = wx.StaticText(self.pantalla_mesa, label="Coloque el nombre de la persona que reserva la mesa")
+        self.visor.Add(self.nombre_etiqueta, 0, wx.ALL | wx.CENTER, 5)
 
-        self.nombre = wx.TextCtrl(pantalla_mesa)
-        visor.Add(self.nombre, 0, wx.ALL | wx.CENTER, 5)
+        self.nombre = wx.TextCtrl(self.pantalla_mesa)
+        self.visor.Add(self.nombre, 0, wx.ALL | wx.CENTER, 5)
 
-        self.cantidad_personas_etiqueta = wx.StaticText(pantalla_mesa, label="Coloque la cantidad de personas que serán en la mesa")
-        visor.Add(self.cantidad_personas_etiqueta, 0, wx.ALL | wx.CENTER, 5)
+        self.cantidad_personas_etiqueta = wx.StaticText(self.pantalla_mesa, label="Coloque la cantidad de personas que serán en la mesa")
+        self.visor.Add(self.cantidad_personas_etiqueta, 0, wx.ALL | wx.CENTER, 5)
 
-        self.cantidad_personas = wx.TextCtrl(pantalla_mesa)
-        visor.Add(self.cantidad_personas, 0, wx.ALL | wx.CENTER, 5)
+        self.cantidad_personas = wx.TextCtrl(self.pantalla_mesa)
+        self.visor.Add(self.cantidad_personas, 0, wx.ALL | wx.CENTER, 5)
 
-        self.fecha_etiqueta = wx.StaticText(pantalla_mesa, label="Coloque la fecha de la reserva en AÑO-MES-DIA")
-        visor.Add(self.fecha_etiqueta, 0, wx.ALL | wx.CENTER, 5)
+        self.fecha_etiqueta = wx.StaticText(self.pantalla_mesa, label="Coloque la fecha de la reserva en AÑO-MES-DIA")
+        self.visor.Add(self.fecha_etiqueta, 0, wx.ALL | wx.CENTER, 5)
 
-        self.fecha = wx.TextCtrl(pantalla_mesa)
-        visor.Add(self.fecha, 0, wx.ALL | wx.CENTER, 5)
+        self.fecha = wx.TextCtrl(self.pantalla_mesa)
+        self.visor.Add(self.fecha, 0, wx.ALL | wx.CENTER, 5)
 
         # Selector de planta del edificio
-        self.planta_etiqueta = wx.StaticText(pantalla_mesa, label="Ingrese en qué planta del edificio reservará")
-        visor.Add(self.planta_etiqueta, 0, wx.ALL | wx.CENTER, 5)
+        self.planta_etiqueta = wx.StaticText(self.pantalla_mesa, label="Ingrese en qué planta del edificio reservará")
+        self.visor.Add(self.planta_etiqueta, 0, wx.ALL | wx.CENTER, 5)
 
         opciones = ["Planta Alta", "Planta Media", "Planta Baja"]
-        self.planta = wx.ListBox(pantalla_mesa, choices=opciones, style=wx.LB_SINGLE)
-        visor.Add(self.planta, 0, wx.ALL | wx.CENTER, 5)
+        self.planta = wx.ListBox(self.pantalla_mesa, choices=opciones, style=wx.LB_SINGLE)
+        self.visor.Add(self.planta, 0, wx.ALL | wx.CENTER, 5)
 
         # Botón para confirmar la reserva
-        self.reserva = wx.Button(pantalla_mesa, label="Registrarse")
+        self.reserva = wx.Button(self.pantalla_mesa, label="Registrarse")
         self.reserva.Bind(wx.EVT_BUTTON, self.reserva_mesa)
-        visor.Add(self.reserva, 0, wx.ALL | wx.CENTER, 5)
+        self.visor.Add(self.reserva, 0, wx.ALL | wx.CENTER, 5)
 
         # Establece el layout del panel
-        visor.Fit(pantalla_mesa)
-        pantalla_mesa.SetSizer(visor)
+        self.visor.Fit(self.pantalla_mesa)
+        self.pantalla_mesa.SetSizer(self.visor)
 
     def reserva_mesa(self, event):
+
         """Valida los datos ingresados y registra la reserva en la base de datos."""
-        nombre = self.nombre.GetValue()
-        cantidad_personas = self.cantidad_personas.GetValue()
-        fecha = self.fecha.GetValue()
-        planta = self.planta.GetStringSelection()
-
-        # Validación de los campos
-        if not nombre or not cantidad_personas or not fecha or not planta:
-            wx.MessageBox("Por favor, complete todos los campos", "Error", wx.OK | wx.ICON_ERROR)
-        else:
-            # Llama a la función que registra la reserva en la base de datos
-            reservar_mesa(self.id_mesa, nombre, cantidad_personas, fecha, planta)
-            wx.MessageBox("Mesa reservada exitosamente", "Reserva", wx.OK | wx.ICON_INFORMATION)
-
-            # Cierra la ventana de reserva y actualiza la lista de mesas
-            self.Close()
-            self.parent.actualizar_mesas()
+        self.nombre = self.nombre.GetValue()
+        self.cantidad_personas = self.cantidad_personas.GetValue()
+        self.fecha = self.fecha.GetValue()
+        self.planta = self.planta.GetStringSelection()
+        try:
 
 
+            # Validación de los campos
+            if not self.nombre or not self.cantidad_personas or not self.fecha or not self.planta:
+                wx.MessageBox("Por favor, complete todos los campos", "Error", wx.OK | wx.ICON_ERROR)
+            else:
+
+                self.validar_fecha()
+                self.validar_nombre()
+
+                if int(self.cantidad_personas) > 7:
+                    wx.MessageBox("El maximo de personas es de 7 por mesa", "Error", wx.OK | wx.ICON_ERROR)
+                    raise ValueError
+                elif int(self.cantidad_personas) < 1:
+                    wx.MessageBox("El minimo de personas es de 1 persona", "Error", wx.OK | wx.ICON_ERROR)
+                    raise ValueError
+                    
+                # Llama a la función que registra la reserva en la base de datos
+                reservar_mesa(self.id_mesa, self.nombre, self.cantidad_personas, self.fecha, self.planta)
+                wx.MessageBox("Mesa reservada exitosamente", "Reserva", wx.OK | wx.ICON_INFORMATION)
+
+                # Cierra la ventana de reserva y actualiza la lista de mesas
+                self.Close()
+                self.parent.actualizar_mesas()
+
+        except ValueError:
+                wx.MessageBox("Algo a sucedido, verifique que ha completado correctamente todos los campos", "Error", wx.OK | wx.ICON_ERROR)
+                self.Close()
+
+    def validar_fecha(self):
+            try:
+                # Convertir la cadena introducida en un objeto datetime
+                self.fecha_reserva = dt.datetime.strptime(self.fecha, "%Y-%m-%d").date()
+                
+                # Obtener la fecha actual
+                self.fecha_actual = dt.date.today()
+                
+                # Definir el límite de 2 años desde la fecha actual
+                self.limite_dos_anios = self.fecha_actual + dt.timedelta(days=2*365)  # Aproximado, puedes ajustar para años bisiestos
+                
+                # Verificar si la fecha es anterior a la actual
+                if self.fecha_reserva < self.fecha_actual:
+                    wx.MessageBox("La mesa no puede ser reservada en una fecha que ya paso", "Error", wx.OK | wx.ICON_ERROR)
+                    raise ValueError
+                
+                # Verificar si la fecha excede los 2 años de límite
+                if self.fecha_reserva > self.limite_dos_anios:
+                    wx.MessageBox("Nuestro limite de reserva es de 2 años", "Error", wx.OK | wx.ICON_ERROR)
+                    raise ValueError               
+            
+            except Exception  as e:
+                wx.MessageBox("Verifique que la fecha este bien introducida", "Error", wx.OK | wx.ICON_ERROR)
+                raise ValueError
+            
+    def validar_nombre(self):
+
+        self.nombre_verificacion = self.nombre.strip()
+
+        if not self.nombre_verificacion:
+            wx.MessageBox("El nombre no puede estar vacio", "Error", wx.OK | wx.ICON_ERROR)
+            raise ValueError
 # Configura y ejecuta la aplicación wxPython
 app = wx.App(False)
 frame = Usuario()
