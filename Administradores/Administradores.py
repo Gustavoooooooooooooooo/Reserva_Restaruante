@@ -133,7 +133,7 @@ class Administrador(wx.Frame):
 class Mesa_Ocupada(wx.Frame):
     def __init__(self, id, parent, reservador, cantidad_personas, fecha_reserva, ubicacion_mesa, *args, **kw):
         #Inicializa la ventana con la información de la mesa ocupada.
-        super(Mesa_Ocupada, self).__init__(*args, **kw)
+        super(Mesa_Ocupada, self).__init__(title = "Mesa Ocupada",*args, **kw)
         self.id_mesa = id
         self.parent = parent
         self.reservador = reservador

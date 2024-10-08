@@ -114,7 +114,7 @@ class Usuario(wx.Frame):
 class Mesa_libre(wx.Frame):
     def __init__(self, id, parent, *args, **kw):
         #Inicializa la interfaz para reservar una mesa libre.
-        super(Mesa_libre, self).__init__(*args, **kw)
+        super(Mesa_libre, self).__init__(title = "Reserva",*args, **kw)
         self.id_mesa = id
         self.parent = parent
 
