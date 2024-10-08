@@ -26,10 +26,10 @@ class Usuario(wx.Frame):
         if hasattr(self, 'visor_principal'):
             self.visor_principal.Clear(True)
 
-        # Organiza los botones de las mesas en un grid de 4 columnas
-        self.visor_mesa = wx.GridSizer(0, 4, 10, 10)
-        self.visor_principal = wx.BoxSizer(wx.VERTICAL)
-        self.visor_botones = wx.BoxSizer(wx.HORIZONTAL)
+        
+        self.visor_mesa = wx.GridSizer(0, 4, 10, 10) # Organiza los botones de las mesas en un grid de 4 columnas
+        self.visor_principal = wx.BoxSizer(wx.VERTICAL) # Visor principal donde convergeran los otros visores
+        self.visor_botones = wx.BoxSizer(wx.HORIZONTAL) # Visor donde se ubicaran los botones
 
         # Conexión a la base de datos para obtener el estado de las mesas
         self.conexion = mysql.connector.connect(
@@ -86,34 +86,34 @@ class Usuario(wx.Frame):
         self.Layout()
 
     def volver_login(self, event):
-        """Cierra la ventana actual y regresa al login."""
+        #Cierra la ventana actual y regresa al login.
         self.Close()
         subprocess.Popen(["python", "../Reserva_Restaruante/Login.py"])
 
     def mostrar_info_mesa(self, nombre):
-        """Muestra un mensaje con la información del reservador de la mesa ocupada."""
+        #Muestra un mensaje con la información del reservador de la mesa ocupada.
         wx.MessageBox(f"Mesa ocupada por {nombre}", "Información de la Mesa", wx.OK | wx.ICON_INFORMATION)
 
     def mostrar_instrucciones(self, event):
-    # Muestra las instrucciones para el uso de la interfaz con imágenes de mesas libres y ocupadas.
+    # Muestra las instrucciones para el uso de la interfaz con las mesas libres y ocupadas.
         mensaje = "Las mesas azules son las mesas libres y las mesas naranjas son las mesas ocupadas."
         dialogo = wx.MessageDialog(self, mensaje, "Información sobre Mesas", wx.OK | wx.ICON_INFORMATION)
         dialogo.ShowModal()
         dialogo.Destroy()
 
     def pantalla_mesa_libre(self, id):
-        """Abre la ventana para reservar una mesa libre."""
+        #Abre la ventana para reservar una mesa libre.
         mesa_libre = Mesa_libre(id, self, None)
         mesa_libre.Show()
 
     def actualizar_mesas(self):
-        """Recarga las mesas desde la base de datos y actualiza la interfaz."""
+        #Recarga las mesas desde la base de datos y actualiza la interfaz.
         self.cargar_mesas()
 
 
 class Mesa_libre(wx.Frame):
     def __init__(self, id, parent, *args, **kw):
-        """Inicializa la interfaz para reservar una mesa libre."""
+        #Inicializa la interfaz para reservar una mesa libre.
         super(Mesa_libre, self).__init__(*args, **kw)
         self.id_mesa = id
         self.parent = parent
@@ -163,11 +163,15 @@ class Mesa_libre(wx.Frame):
 
     def reserva_mesa(self, event):
 
-        """Valida los datos ingresados y registra la reserva en la base de datos."""
-        self.nombre = self.nombre.GetValue()
-        self.cantidad_personas = self.cantidad_personas.GetValue()
-        self.fecha = self.fecha.GetValue()
-        self.planta = self.planta.GetStringSelection()
+        #Valida los datos ingresados y registra la reserva en la base de datos.
+
+        try:
+            self.nombre = self.nombre.GetValue()
+            self.cantidad_personas = self.cantidad_personas.GetValue()
+            self.fecha = self.fecha.GetValue()
+            self.planta = self.planta.GetStringSelection()
+        except ValueError:
+            self.validar_nombre()
         try:
 
 

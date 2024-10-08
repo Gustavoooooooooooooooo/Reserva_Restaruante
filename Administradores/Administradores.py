@@ -28,11 +28,9 @@ class Administrador(wx.Frame):
         if hasattr(self, 'visor_principal'):
             self.visor_principal.Clear(True)  # Limpia el visor si ya existe
 
-        # wx.GridSizer organiza las mesas en un grid con 4 columnas
-        self.visor_mesa = wx.GridSizer(0, 4, 10, 10)
-        self.visor_principal = wx.BoxSizer(wx.VERTICAL)
-        self.visor_botones = wx.BoxSizer(wx.HORIZONTAL)
-
+        self.visor_mesa = wx.GridSizer(0, 4, 10, 10) # Organiza los botones de las mesas en un grid de 4 columnas
+        self.visor_principal = wx.BoxSizer(wx.VERTICAL) # Visor principal donde convergeran los otros visores
+        self.visor_botones = wx.BoxSizer(wx.HORIZONTAL) # Visor donde se ubicaran los botones
 
         # Conexión a la base de datos MySQL
         self.conexion = mysql.connector.connect(
@@ -95,30 +93,30 @@ class Administrador(wx.Frame):
         self.Layout()
 
     def mostrar_instrucciones(self, event):
-    # Muestra las instrucciones para el uso de la interfaz con imágenes de mesas libres y ocupadas.
+    # Muestra las instrucciones para el uso de la interfaz con las mesas libres y ocupadas.
         mensaje = "Las mesas azules son las mesas libres y las mesas naranjas son las mesas ocupadas."
         dialogo = wx.MessageDialog(self, mensaje, "Información sobre Mesas", wx.OK | wx.ICON_INFORMATION)
         dialogo.ShowModal()
         dialogo.Destroy()
 
     def volver_login(self, event):
-        "Cierra la ventana actual y regresa a la pantalla de login."
+        #Cierra la ventana actual y regresa a la pantalla de login.
         self.Close()
         subprocess.Popen(["python", "../Reserva_Restaruante/Login.py"])
 
     def Creacion_mesa(self, event):
-        "Llama a la función externa para crear una nueva mesa y actualiza la lista."
-        crear_mesa()  # Llama a la función para crear una nueva mesa
-        self.actualizar_mesas()  # Refresca la lista de mesas
+        #Llama a la función externa para crear una nueva mesa y actualiza la lista.
+        crear_mesa()
+        self.actualizar_mesas()
 
     def operaciones_mesa_libre(self, id):
-        "Realiza operaciones sobre una mesa libre, como eliminarla."
+        #Realiza operaciones sobre una mesa libre, como eliminarla.
         operacion = wx.MessageDialog(None, "¿Desea eliminar la mesa?", "Mesa Libre", wx.YES_NO | wx.ICON_QUESTION)
         respuesta = operacion.ShowModal()
 
         if respuesta == wx.ID_YES:
-            eliminar_mesa(id)  # Elimina la mesa seleccionada
-        self.actualizar_mesas()  # Actualiza la lista de mesas
+            eliminar_mesa(id)
+        self.actualizar_mesas()
 
     def pantalla_mesa_ocupada(self, id, reservador, cantidad_personas, fecha_reserva, ubicacion_mesa):
         #Abre una nueva ventana con información sobre la mesa ocupada.

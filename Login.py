@@ -94,7 +94,7 @@ class Registro(wx.Frame):
         except ValueError:
             wx.MessageBox("Ha ocurrido un error, vuelva a intentar registrarse", "Error", wx.OK | wx.ICON_ERROR)
 
-    def validar_nombre(self):
+    def validar_nombre(self): #Valida si el nombre se compone solo de espacios vacios
 
         self.nombre_verificacion = self.usuario_registro.strip()
 
